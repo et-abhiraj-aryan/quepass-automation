@@ -4,7 +4,7 @@ This repo automates the QuePass **platform registration** flow end-to-end and ca
 feed the SDK an **AI-generated face video** to test liveness. Below are the exact
 steps to run it yourself.
 
-> You need two things from Abhiraj that are **not** in this repo (kept out on
+> You need two things that are **not** in this repo (kept out on
 > purpose): the **operator credentials** and a **valid passport image**.
 
 ## 1. Prerequisites
