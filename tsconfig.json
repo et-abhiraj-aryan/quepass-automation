@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "Node16",
+    "target": "ES2021",
+    "lib": ["ES2021", "DOM"],
+    "moduleResolution": "Node16",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "features/**/*.ts", "playwright.config.ts"]
+}

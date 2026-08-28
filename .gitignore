@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets
+.env
+.env.*.local
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# playwright-bdd generated specs
+/.features-gen/
+
+# Downloads produced by tests
+/downloads/
+
+# Large generated fake-camera videos (regenerate via fixtures/media/build-face.*)
+fixtures/media/*.y4m
+# Stray source clips in the project root (canonical copies live in fixtures/media/)
+/17855.mp4
+/ai_smile.mp4
+
+# Personal identity documents used as test fixtures (do not commit)
+fixtures/media/*.jpeg
+fixtures/media/*.jpg
+/Abhiraj_passport_front.jpeg
+
+# Real face-video source (personal) — the AI tests use ai_smile.mp4 instead
+fixtures/media/source-face.mp4
+
+# Archived original recorded specs (contain hardcoded encoded credentials)
+/archive/
+
+# Traces captured during recording
+/test2_trace/
+/test2_trace.zip
