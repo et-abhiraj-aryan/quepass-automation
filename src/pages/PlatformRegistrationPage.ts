@@ -117,6 +117,45 @@ export class PlatformRegistrationPage extends BasePage {
     await this.clickAndWaitForApis(this.startFaceCaptureButton, ApiGroups.platformFaceVerify);
   }
 
+  /**
+   * ANTI-SPOOF REGRESSION: inject a pre-recorded video as the camera and assert
+   * liveness REJECTS it — i.e. the flow must NOT proceed to VerifyAndSearch. This
+   * passes when the anti-spoof defense is working and fails loudly if an injected
+   * stream ever gets verified. `watchMs` is how long we watch for a (bad) success.
+   */
+  async expectInjectedFaceRejected(videoPath: string, watchMs = 30000): Promise<void> {
+    const absolute = path.resolve(videoPath);
+    const base64 = fs.readFileSync(absolute).toString('base64');
+    const dataUrl = `data:video/mp4;base64,${base64}`;
+
+    await this.page.evaluate(async (url) => {
+      const setVideo = (window as unknown as {
+        __setCameraVideo?: (u: string) => Promise<boolean>;
+      }).__setCameraVideo;
+      if (!setVideo) throw new Error('camera video injection is not available (fake camera off?)');
+      await setVideo(url);
+    }, dataUrl);
+
+    // A verified spoof would fire VerifyAndSearch (the post-liveness step). We must
+    // NOT see it: resolve false on timeout (rejected = good), true if it succeeds.
+    const gotVerified = this.page
+      .waitForResponse(
+        (r) => r.url().includes('VerifyAndSearch') && r.status() === 200,
+        { timeout: watchMs }
+      )
+      .then(() => true)
+      .catch(() => false);
+
+    await this.startFaceCaptureButton.click();
+
+    if (await gotVerified) {
+      throw new Error(
+        'ANTI-SPOOF REGRESSION FAILED: an injected pre-recorded video passed liveness ' +
+          '(VerifyAndSearch returned 200). The anti-spoof layer no longer rejects injected streams.'
+      );
+    }
+  }
+
   /** Clicks the "Continue" button between steps (no network wait). */
   async continue(): Promise<void> {
     await this.continueButton.click();

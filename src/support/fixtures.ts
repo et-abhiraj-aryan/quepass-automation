@@ -105,7 +105,10 @@ export const test = base.extend<QuePassFixtures>({
       await page.addInitScript(() => {
         const md = navigator.mediaDevices;
         if (!md || !md.getUserMedia) return;
-        const orig = md.getUserMedia.bind(md);
+        const proto = Object.getPrototypeOf(md) as MediaDevices;
+        const origGUM = proto.getUserMedia as (
+          c?: MediaStreamConstraints
+        ) => Promise<MediaStream>;
         const w = window as unknown as {
           __setCameraImage?: (dataUrl: string, fit?: number) => Promise<boolean>;
           __setCameraVideo?: (dataUrl: string) => Promise<boolean>;
@@ -187,7 +190,7 @@ export const test = base.extend<QuePassFixtures>({
             el.onloadeddata = () => {
               el.play().then(
                 () => {
-                  source = { kind: 'video', el, fit: 1.0 };
+                  source = { kind: 'video', el, fit: 1.3 };
                   resolve(true);
                 },
                 (e) => reject(e as Error)
@@ -205,7 +208,13 @@ export const test = base.extend<QuePassFixtures>({
           val && typeof val === 'object' && 'exact' in (val as Record<string, unknown>)
             ? { ideal: (val as Record<string, unknown>).exact }
             : val;
-        md.getUserMedia = (constraints?: MediaStreamConstraints) => {
+
+        // Patch getUserMedia on the PROTOTYPE (native methods live on the
+        // prototype, not as an own property of the instance) and disguise it as
+        // native code below, so the app's anti-tamper check — which errors with
+        // "underlying native no longer native" when getUserMedia is no longer
+        // native — does not detect the override.
+        function fakeGetUserMedia(this: MediaDevices, constraints?: MediaStreamConstraints) {
           if (constraints && typeof constraints.video === 'object') {
             const v: Record<string, unknown> = { ...(constraints.video as object) };
             for (const k of ['width', 'height', 'frameRate', 'aspectRatio']) {
@@ -215,32 +224,37 @@ export const test = base.extend<QuePassFixtures>({
             delete v.facingMode;
             constraints = { ...constraints, video: v as MediaTrackConstraints };
           }
-          // Injected canvas content (passport image / face video) wins over the
-          // real fake-webcam device whenever a source has been set. Hand out a
-          // FRESH stream each call — the app stops the track after each capture,
+          // Injected canvas content wins whenever a source has been set. Hand out
+          // a FRESH stream each call — the app stops the track after each capture,
           // so a reused stream would be 'ended' (black) on the next capture.
           if (camCanvas) {
             return Promise.resolve(camCanvas.captureStream(30));
           }
-          // eslint-disable-next-line no-console
-          console.log('GUM request ' + JSON.stringify(constraints));
-          return orig(constraints).then(
-            (stream) => {
-              try {
-                // eslint-disable-next-line no-console
-                console.log('GUM ok ' + JSON.stringify(stream.getVideoTracks()[0].getSettings()));
-              } catch {
-                /* ignore */
-              }
-              return stream;
-            },
-            (e: Error) => {
-              // eslint-disable-next-line no-console
-              console.log('GUM error ' + e.name + ' ' + e.message);
-              throw e;
-            }
-          );
-        };
+          return origGUM.call(this, constraints);
+        }
+        Object.defineProperty(fakeGetUserMedia, 'name', { value: 'getUserMedia' });
+        Object.defineProperty(proto, 'getUserMedia', {
+          value: fakeGetUserMedia,
+          writable: true,
+          enumerable: false,
+          configurable: true,
+        });
+
+        // Make Function.prototype.toString report native code for the patched
+        // getUserMedia (and for itself), defeating `toString().includes("[native
+        // code]")` integrity checks.
+        const nativeToString = Function.prototype.toString;
+        function stealthToString(this: unknown): string {
+          if (this === fakeGetUserMedia) return 'function getUserMedia() { [native code] }';
+          if (this === stealthToString) return 'function toString() { [native code] }';
+          return nativeToString.call(this);
+        }
+        Object.defineProperty(Function.prototype, 'toString', {
+          value: stealthToString,
+          writable: true,
+          enumerable: false,
+          configurable: true,
+        });
       });
     }
     await use(page);
