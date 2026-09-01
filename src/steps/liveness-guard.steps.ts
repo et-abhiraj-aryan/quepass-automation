@@ -10,3 +10,10 @@ Then(
     await platformPage.expectInjectedFaceRejected(videoPath);
   }
 );
+
+Then(
+  'an injected face video {string} must be rejected by liveness within {int} seconds',
+  async ({ platformPage }, videoPath: string, seconds: number) => {
+    await platformPage.expectInjectedFaceRejected(videoPath, seconds * 1000);
+  }
+);
