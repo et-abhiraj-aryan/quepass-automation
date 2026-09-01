@@ -36,7 +36,7 @@ export const env = {
     channel: optional('CHANNEL', '1'),
   },
 
-  defaultEvent: optional('DEFAULT_EVENT', 'Mulitple - Mumbai'),
+  defaultEvent: optional('DEFAULT_EVENT', 'Multiple Registeration - remote'),
 
   /**
    * Absolute path to a Y4M/MJPEG video used as a fake webcam so face-capture

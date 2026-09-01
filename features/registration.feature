@@ -8,7 +8,7 @@ Feature: Event registration
 
   Scenario: Register an attendee and download their pass
     When I start a new event registration
-    And I select the event "Mulitple - Mumbai"
+    And I select the event "Multiple Registeration - remote"
     And I select the ticket type "Standard"
     And I continue to face capture for registration
     Then the attendee pass is downloaded

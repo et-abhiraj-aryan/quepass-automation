@@ -8,10 +8,10 @@ Feature: Event face capture and search
 
   Scenario: Capture an attendee face for an event
     When I open the event face capture module
-    And I select the event "Mulitple - Mumbai"
+    And I select the event "Multiple Registeration - remote"
     Then the attendee face is captured and searched
 
   Scenario: Search an attendee face for an event
     When I open the event face search module
-    And I select the event "Mulitple - Mumbai"
+    And I select the event "Multiple Registeration - remote"
     Then the attendee is found by event face search
