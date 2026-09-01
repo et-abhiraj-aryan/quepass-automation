@@ -45,9 +45,39 @@ export class SettingsPage extends BasePage {
     return this.page.getByRole('button', { name: 'Save' });
   }
 
-  /** Navigates to the application under test. */
+  /**
+   * Navigates to the app and waits until it is ready. With the saved session
+   * (storageState) the app loads already configured, straight to the dashboard —
+   * no Update Settings / credential refill needed.
+   */
   async open(): Promise<void> {
     await this.page.goto(env.baseUrl);
+    await this.waitUntilReady();
+  }
+
+  /** Waits until the configured dashboard (module launcher) is visible. */
+  private async waitUntilReady(): Promise<void> {
+    await this.page
+      .getByRole('button', { name: 'Start' })
+      .first()
+      .waitFor({ state: 'visible', timeout: 60000 });
+  }
+
+  /**
+   * Sets the liveness flags directly in the app's stored config and reloads, so
+   * flows that need liveness off don't have to re-open the settings dialog. The
+   * app persists these as localStorage `activeLiveness` / `passiveLiveness`.
+   */
+  async setLiveness(active: boolean, passive: boolean): Promise<void> {
+    await this.page.evaluate(
+      ({ a, p }) => {
+        localStorage.setItem('activeLiveness', String(a));
+        localStorage.setItem('passiveLiveness', String(p));
+      },
+      { a: active, p: passive }
+    );
+    await this.page.reload();
+    await this.waitUntilReady();
   }
 
   /** Opens the settings dialog and enters the configured operator credentials. */
@@ -74,6 +104,11 @@ export class SettingsPage extends BasePage {
   /** Turns active and passive liveness detection off (used by some flows). */
   async disableLiveness(): Promise<void> {
     await this.activeLivenessCheckbox.uncheck();
+    await this.passiveLivenessCheckbox.uncheck();
+  }
+
+  /** Unchecks only Passive Liveness in the client settings. */
+  async disablePassiveLiveness(): Promise<void> {
     await this.passiveLivenessCheckbox.uncheck();
   }
 

@@ -25,8 +25,15 @@ const fakeCameraArgs = env.fakeCameraVideo
     ]
   : [];
 
+/**
+ * Saved session (localStorage config) produced once by the `setup` project.
+ * Every test reuses it and starts already-configured — no per-test Update Settings.
+ */
+const STORAGE_STATE = 'playwright/.auth/state.json';
+
 export default defineConfig({
   testDir,
+  globalSetup: './src/setup/global-setup.ts',
   timeout: env.timeouts.test,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -52,11 +59,12 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         permissions: ['camera'],
         launchOptions: { args: fakeCameraArgs },
+        storageState: STORAGE_STATE,
       },
     },
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: { ...devices['Desktop Firefox'], storageState: STORAGE_STATE },
     },
   ],
 });

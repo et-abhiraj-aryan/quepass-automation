@@ -6,10 +6,15 @@ const FACE_VIDEO = 'fixtures/media/source-face.mp4';
 
 Given('the QuePass workstation is configured for platform verification', async ({ settingsPage }) => {
   await settingsPage.open();
-  await settingsPage.enterOperatorConfiguration();
-  await settingsPage.confirmDevelopmentEnvironmentIfPresent();
-  await settingsPage.save();
 });
+
+Given(
+  'the QuePass workstation is configured for platform verification with passive liveness disabled',
+  async ({ settingsPage }) => {
+    await settingsPage.open();
+    await settingsPage.setLiveness(true, false);
+  }
+);
 
 When('I start a platform registration', async ({ platformPage }) => {
   await platformPage.startRegistration();
