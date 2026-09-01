@@ -14,13 +14,4 @@ Then(
   }
 );
 
-Then(
-  'the attendee is checked in by QR when I select the event {string}',
-  async ({ eventPage }, eventName: string) => {
-    await eventPage.selectEventAndCheckInByQr(eventName);
-  }
-);
-
-Then('the attendee is checked in by QR after the countdown', async ({ biometricPage }) => {
-  await biometricPage.continueCountdown(ApiGroups.qrCheckIn);
-});
+// QR check-in steps live in qr-checkin.steps.ts (register → scan the pass QR).

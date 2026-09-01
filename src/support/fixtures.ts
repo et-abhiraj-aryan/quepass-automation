@@ -16,6 +16,8 @@ export type QuePassFixtures = {
   eventPage: EventPage;
   biometricPage: BiometricPage;
   platformPage: PlatformRegistrationPage;
+  /** Shared per-scenario store, e.g. the path of a downloaded pass. */
+  passStore: { path?: string };
 };
 
 export const test = base.extend<QuePassFixtures>({
@@ -110,7 +112,11 @@ export const test = base.extend<QuePassFixtures>({
           c?: MediaStreamConstraints
         ) => Promise<MediaStream>;
         const w = window as unknown as {
-          __setCameraImage?: (dataUrl: string, fit?: number) => Promise<boolean>;
+          __setCameraImage?: (
+            dataUrl: string,
+            fit?: number,
+            crop?: { x: number; y: number; w: number; h: number }
+          ) => Promise<boolean>;
           __setCameraVideo?: (dataUrl: string) => Promise<boolean>;
           __clearCameraImage?: () => void;
         };
@@ -126,8 +132,9 @@ export const test = base.extend<QuePassFixtures>({
         const CANVAS_H = 960;
         let camCanvas: HTMLCanvasElement | null = null;
         let camCtx: CanvasRenderingContext2D | null = null;
+        type Crop = { x: number; y: number; w: number; h: number };
         let source:
-          | { kind: 'image'; el: HTMLImageElement; fit: number }
+          | { kind: 'image'; el: HTMLImageElement; fit: number; crop?: Crop }
           | { kind: 'video'; el: HTMLVideoElement; fit: number }
           | null = null;
 
@@ -144,11 +151,28 @@ export const test = base.extend<QuePassFixtures>({
               if (source) {
                 const iw = source.kind === 'image' ? source.el.naturalWidth : source.el.videoWidth;
                 const ih = source.kind === 'image' ? source.el.naturalHeight : source.el.videoHeight;
-                if (iw && ih) {
-                  const s = Math.min((CANVAS_W * source.fit) / iw, (CANVAS_H * source.fit) / ih);
-                  const dw = iw * s;
-                  const dh = ih * s;
-                  camCtx.drawImage(source.el, (CANVAS_W - dw) / 2, (CANVAS_H - dh) / 2, dw, dh);
+                // Optional source-crop (fractions) — used to isolate the QR code
+                // from a full pass image so it fills the scan frame.
+                const crop = source.kind === 'image' ? source.crop : undefined;
+                const sx = crop ? crop.x * iw : 0;
+                const sy = crop ? crop.y * ih : 0;
+                const sw = crop ? crop.w * iw : iw;
+                const sh = crop ? crop.h * ih : ih;
+                if (sw && sh) {
+                  const s = Math.min((CANVAS_W * source.fit) / sw, (CANVAS_H * source.fit) / sh);
+                  const dw = sw * s;
+                  const dh = sh * s;
+                  camCtx.drawImage(
+                    source.el,
+                    sx,
+                    sy,
+                    sw,
+                    sh,
+                    (CANVAS_W - dw) / 2,
+                    (CANVAS_H - dh) / 2,
+                    dw,
+                    dh
+                  );
                 }
               }
             }
@@ -157,12 +181,12 @@ export const test = base.extend<QuePassFixtures>({
           requestAnimationFrame(loop);
         };
 
-        w.__setCameraImage = (dataUrl: string, fit = 0.6) =>
+        w.__setCameraImage = (dataUrl: string, fit = 0.6, crop?: Crop) =>
           new Promise<boolean>((resolve, reject) => {
             ensureCam();
             const el = new Image();
             el.onload = () => {
-              source = { kind: 'image', el, fit };
+              source = { kind: 'image', el, fit, crop };
               resolve(true);
             };
             el.onerror = () => reject(new Error('camera image failed to load'));
@@ -273,6 +297,9 @@ export const test = base.extend<QuePassFixtures>({
   },
   platformPage: async ({ page }, use) => {
     await use(new PlatformRegistrationPage(page));
+  },
+  passStore: async ({ page: _page }, use) => {
+    await use({});
   },
 });
 
