@@ -2,7 +2,8 @@ import { Given, When, Then } from '../support/fixtures';
 
 /** Media pushed into the camera during the passport-scan and face-capture steps. */
 const PASSPORT_IMAGE = 'fixtures/media/passport-front.jpeg';
-const FACE_VIDEO = 'fixtures/media/source-face.mp4';
+/** Override the face clip with FACE_VIDEO=... on the command line. */
+const FACE_VIDEO = process.env.FACE_VIDEO || 'fixtures/media/source-face.mp4';
 
 Given('the QuePass workstation is configured for platform verification', async ({ settingsPage }) => {
   await settingsPage.open();
