@@ -33,6 +33,13 @@ When('I scan the passport with the camera', async ({ platformPage }) => {
   await platformPage.scanPassport(PASSPORT_IMAGE);
 });
 
+When('I scan the ID card with the camera', async ({ platformPage }) => {
+  // Reuses the same document-image injection as the passport step. (In practice the
+  // flow is blocked at Start Verification, upstream of this step, by the cross-realm
+  // anti-tamper check — so this is only exercised if that block is ever lifted.)
+  await platformPage.scanPassport(PASSPORT_IMAGE);
+});
+
 When('I continue past the passport result', async ({ platformPage }) => {
   await platformPage.continue();
 });

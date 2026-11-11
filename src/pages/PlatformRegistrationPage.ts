@@ -47,6 +47,24 @@ export class PlatformRegistrationPage extends BasePage {
   }
 
   async startVerification(): Promise<void> {
+    // Race the button against an /error navigation so a blocked run fails with a
+    // clear message instead of hanging until the browser is closed (which shows
+    // up as the opaque "Target page ... has been closed"). If the app bounces to
+    // its /error gate (automation / anti-spoof), say so explicitly.
+    const appeared = this.startVerificationButton
+      .waitFor({ state: 'visible', timeout: 20000 })
+      .then(() => 'ok' as const)
+      .catch(() => 'timeout' as const);
+
+    const bounced = this.page
+      .waitForURL(/\/error/, { timeout: 20000 })
+      .then(() => 'error' as const)
+      .catch(() => 'timeout' as const);
+
+    const outcome = await Promise.race([appeared, bounced]);
+    if (outcome === 'error') {
+      throw new Error('Blocked: app redirected to /error (automation gate) before Start Verification.');
+    }
     await this.startVerificationButton.click();
   }
 

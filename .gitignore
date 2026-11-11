@@ -29,6 +29,16 @@ fixtures/media/*.y4m
 fixtures/media/*.jpeg
 fixtures/media/*.jpg
 /Abhiraj_passport_front.jpeg
+/Aryan Abhiraj.png
+
+# Local-only security testing notes (do not commit — share via the security channel)
+/INJECTION-CAPABILITY-REPORT.md
+/INJECTION-TEST-SUMMARY.md
+/ANTI-TAMPER-FIX-VERIFIED.md
+/SECURITY-FINDINGS.md
+
+# Scratch / learning Playwright files — real tests live in features/ + src/steps/
+/tests/
 
 # Real face-video sources (personal) — the AI tests use ai_smile.mp4 instead
 fixtures/media/source-face.mp4
