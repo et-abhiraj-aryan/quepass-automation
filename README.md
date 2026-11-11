@@ -1,4 +1,4 @@
-# QuePass Automation
+# Quepass Automation
 
 End-to-end BDD test automation for the QuePass application, built on
 **Playwright** + **Cucumber** via [`playwright-bdd`](https://vitalets.github.io/playwright-bdd/).
